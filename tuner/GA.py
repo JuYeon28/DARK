@@ -50,6 +50,7 @@ def server_connection(args, top_k_config_path, name):
     sftp = client.open_sftp()
     sftp.put(top_k_config_path, './redis-sample-generation/'+name)
     command = f'python ./redis-sample-generation/connection.py {args.persistence.lower()} {args.target} ./redis-sample-generation/'+name
+    print("Sftp Start")
     _, ssh_stdout, _ = client.exec_command(command)
     exit_status = ssh_stdout.channel.recv_exit_status()
     if exit_status == 0:

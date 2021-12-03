@@ -26,8 +26,8 @@ from torch.utils.data import DataLoader,RandomSampler
 import utils
 import knobs
 
-#DATA_PATH = "../data/redis_data"
-DATA_PATH = "../data2/redis_data"
+DATA_PATH = "../data/redis_data"
+#DATA_PATH = "../data2/redis_data"
 DEVICE = torch.device("cpu")
 
 import warnings
@@ -56,7 +56,6 @@ def data_preprocessing(target_num: int, persistence: str, logger: logging) -> Tu
     """
 
     knobs_path:str = os.path.join(DATA_PATH, "configs")
-    knobs_path:str = os.path.join(DATA_PATH, "configs", "configfile")
     # if persistence == "RDB":
     #     knob_data, _ = knobs.load_knobs(knobs_path)
     # elif persistence == "AOF":
@@ -112,8 +111,7 @@ def data_preprocessing(target_num: int, persistence: str, logger: logging) -> Tu
     aggregated_latency_data: dict = knobs.aggregate_datas(latency_metric_datas)
     aggregated_knob_data: dict = knobs.aggregate_datas(knob_datas)
 
-    return aggregated_knob_data, aggregated_IM_data, aggregated_ops_data, aggregated_latency_data,\
-        target_knob_data, ops_target_external_data, latency_target_external_data
+    return aggregated_knob_data, aggregated_IM_data, aggregated_ops_data, aggregated_latency_data, target_knob_data, ops_target_external_data, latency_target_external_data
 
 #Step 1
 def metric_simplification(metric_data: dict, logger: logging, args : argparse) -> list:
@@ -220,15 +218,13 @@ def knobs_ranking(knob_data: dict, metric_data: dict, mode: str, logger: logging
 #, Ops_target_external_data, latency_target_external_data
 def prepareForTraining(opt, top_k_knobs, target_knobs: dict, aggregated_data, target_external_data, index):
     columns=['Totals_Ops/sec','Totals_p99_Latency']
-    #with open("../data/workloads_info.json",'r') as f:
-    with open("../data2/workloads_info.json",'r') as f:
+    with open("../data/workloads_info.json",'r') as f:
         workload_info = json.load(f)
 
     workloads=np.array([])
     target_workload = np.array([])
     for workload in range(1,len(workload_info.keys())):
-        #count = 3000
-        count = 5000
+        count = 3000
         if workload != opt.target:
             while count:
                 if not len(workloads):
@@ -294,6 +290,7 @@ def set_model(opt):
     optimizer['Totals_p99_Latency'] = AdamW(model['Totals_p99_Latency'].parameters(), lr = opt.lr, weight_decay = 0.15)
     return model, optimizer
 
+
 def double_fitness_function(solution, args, model):
     solDataset = RedisDataset(solution,np.zeros((len(solution),1)))
     solDataloader = DataLoader(solDataset,shuffle=False,batch_size=args.n_pool,collate_fn=utils.collate_function)
@@ -319,9 +316,9 @@ def double_prepareForGA(args, top_k_knobs):
     count = 3000
     while count:
         if not len(target_workload_info):
-            target_workload_info = np.array(workload_info[args.target])
+            target_workload_info = np.array(workload_info[str(args.target)])
             count -= 1
-        target_workload_info = np.vstack((target_workload_info,np.array(workload_info[args.target])))
+        target_workload_info = np.vstack((target_workload_info,np.array(workload_info[str(args.target)])))
         count -= 1
 
     #knob data
