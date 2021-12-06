@@ -16,7 +16,7 @@ from models.redisDataset import RedisDataset
 from models.ranking import Ranking
 from models.dnn import RedisSingleDNN
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 import torch
