@@ -29,7 +29,7 @@ parser.add_argument('--path',type= str)
 parser.add_argument('--sk', type= str, default=' ')
 parser.add_argument('--num', type = str, nargs='+')
 parser.add_argument('--n_pool',type = int, default = 64)
-parser.add_argument('--n_generation', type=int, default=4000,)
+parser.add_argument('--n_generation', type=int, default=8000,)
 parser.add_argument("--model_mode", type = str, default = 'double', help = "model mode")
 
 args = parser.parse_args()
@@ -231,7 +231,7 @@ def main():
     if connect:
         server_connection(args, top_k_config_path, name)
     else:
-        logger.info("Because appednfsync is 'always', Fin GA")
+        logger.info("Because appendfsync is 'always', Fin GA")
         return 0
 
     #save results
