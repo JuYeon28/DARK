@@ -26,6 +26,7 @@ if __name__ == '__main__':
         model_mode = ['double'],
         n_epochs = [200],
         lr = [1e-5],
+        atr = [False],
     )
     runs = get_runs(hyperparams_dict)
     results_list = []

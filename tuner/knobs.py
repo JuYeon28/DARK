@@ -37,20 +37,21 @@ def knobs_make_dict(knobs_path: str, pd_metrics: DataFrame, persistence: str) ->
         knob_path: str = os.path.join(knobs_path, 'config'+str(m)+'.conf')
         f = open(knob_path, 'r')
         config_file: List[str] = f.readlines()
-        knobs_list = config_file[62:]
+        #knobs_list = config_file[62:]
+        #knobs_list = config_file[1294:]
         #TODO:: why whitespace in line 63
-        #knobs_list = config_file[63:]
+        knobs_list = config_file[62:]
         #knobs_list = config_file[config_file.index('\n')+1:]
         cnt = 1
 
         for knobs in knobs_list:
             if knobs.split()[0] != 'save':
                 knob, data = knobs.strip().split()
-                if data.isalpha() or '-' in data:
+                if knob == 'appendfsync':
+                    data = ["always","everysec","no"].index(data)
+                elif data.isalpha() or '-' in data:
                     if data in ["no","yes"]:
                         data = ["no","yes"].index(data)
-                    elif data in ["always","everysec","no"]:
-                        data = ["always","everysec","no"].index(data)
                     #maxmemory-policy
                     elif data in ["volatile-lru","allkeys-lru","volatile-lfu","allkeys-lfu","volatile-random","allkeys-random","volatile-ttl","noeviction"]:
                         data = ["volatile-lru","allkeys-lru","volatile-lfu","allkeys-lfu","volatile-random","allkeys-random","volatile-ttl","noeviction"].index(data)

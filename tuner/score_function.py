@@ -8,6 +8,9 @@ def mse_loss(target, predict):
 def ATR_loss(default, predict, weight):
     return sum([((-1**i)*weight[i]*(predict[:,i]-default[:,i]))/default[:,i] for i in range(len(weight))])
 
+def ATR_loss2(default, predict, weight):
+    return sum([((-1**i)*weight[i]*(predict[i]-default[i]))/default[i] for i in range(len(weight))])
+
 def throughput_loss(default, predict):
     loss = []
     for d, p in zip(default, predict):

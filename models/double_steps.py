@@ -16,7 +16,7 @@ from models.redisDataset import RedisDataset
 from models.ranking import Ranking
 from models.dnn import RedisSingleDNN
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 import torch
@@ -27,6 +27,7 @@ import utils
 import knobs
 
 DATA_PATH = "../data/redis_data"
+#DATA_PATH = "../data2/redis_data"
 DEVICE = torch.device("cpu")
 
 import warnings
@@ -53,7 +54,7 @@ def data_preprocessing(target_num: int, persistence: str, logger: logging) -> Tu
         'rowlabels'=array([1, 2, ..., 10000])}
     
     """
-    
+
     knobs_path:str = os.path.join(DATA_PATH, "configs")
     # if persistence == "RDB":
     #     knob_data, _ = knobs.load_knobs(knobs_path)
@@ -66,7 +67,7 @@ def data_preprocessing(target_num: int, persistence: str, logger: logging) -> Tu
     ops_metric_datas = {}
     latency_metric_datas = {}
     knob_datas = {}
-
+    
     # len()-1 because of configs dir
     for i in range(1,len(os.listdir(DATA_PATH))):
         if target_num == i:
@@ -110,8 +111,7 @@ def data_preprocessing(target_num: int, persistence: str, logger: logging) -> Tu
     aggregated_latency_data: dict = knobs.aggregate_datas(latency_metric_datas)
     aggregated_knob_data: dict = knobs.aggregate_datas(knob_datas)
 
-    return aggregated_knob_data, aggregated_IM_data, aggregated_ops_data, aggregated_latency_data,\
-        target_knob_data, ops_target_external_data, latency_target_external_data
+    return aggregated_knob_data, aggregated_IM_data, aggregated_ops_data, aggregated_latency_data, target_knob_data, ops_target_external_data, latency_target_external_data
 
 #Step 1
 def metric_simplification(metric_data: dict, logger: logging, args : argparse) -> list:
@@ -146,6 +146,8 @@ def metric_simplification(metric_data: dict, logger: logging, args : argparse) -
     fa_model.fit(shuffled_matrix, unique_columnlabels, n_components=5)
     # Components: metrics * factors
     components = fa_model.components_.T.copy()
+    # np.save(f'./components_{args.target}', components)
+    # print(unique_columnlabels)
 
     # Clustering method : Gaussian Mixture Model(GMM)
     logger.info("Clustering mode : {}".format(args.cluster))
@@ -258,8 +260,8 @@ def prepareForTraining(opt, top_k_knobs, target_knobs: dict, aggregated_data, ta
     scaler_X = StandardScaler().fit(X_train)
     X_tr = scaler_X.transform(X_train).astype(np.float32)
     X_val = scaler_X.transform(X_val).astype(np.float32)
-    X_te = scaler_X.transform(target_knobs).astype(np.float32)
-    #X_te = scaler_X.transform(target_workload).astype(np.float32)
+    #X_te = scaler_X.transform(target_knobs).astype(np.float32)
+    X_te = scaler_X.transform(target_workload).astype(np.float32)
 
     scaler_y = StandardScaler().fit(y_train)
     y_train = scaler_y.transform(y_train).astype(np.float32)
@@ -276,7 +278,7 @@ def prepareForTraining(opt, top_k_knobs, target_knobs: dict, aggregated_data, ta
 
     trainDataloader = DataLoader(trainDataset, sampler = trainSampler, batch_size = 32, collate_fn = utils.collate_function)
     valDataloader = DataLoader(valDataset, sampler = valSampler, batch_size = 16, collate_fn = utils.collate_function)
-    testDataloader = DataLoader(testDataset, sampler = testSampler, batch_size = 4, collate_fn = utils.collate_function)
+    testDataloader = DataLoader(testDataset, sampler = testSampler, batch_size = 1, collate_fn = utils.collate_function)
     
     return trainDataloader, valDataloader, testDataloader, scaler_y
 
@@ -289,6 +291,7 @@ def set_model(opt):
     optimizer['Totals_Ops_sec'] = AdamW(model['Totals_Ops_sec'].parameters(), lr = opt.lr, weight_decay = 0.15)
     optimizer['Totals_p99_Latency'] = AdamW(model['Totals_p99_Latency'].parameters(), lr = opt.lr, weight_decay = 0.15)
     return model, optimizer
+
 
 def double_fitness_function(solution, args, model):
     solDataset = RedisDataset(solution,np.zeros((len(solution),1)))
@@ -315,9 +318,9 @@ def double_prepareForGA(args, top_k_knobs):
     count = 3000
     while count:
         if not len(target_workload_info):
-            target_workload_info = np.array(workload_info[args.target])
+            target_workload_info = np.array(workload_info[str(args.target)])
             count -= 1
-        target_workload_info = np.vstack((target_workload_info,np.array(workload_info[args.target])))
+        target_workload_info = np.vstack((target_workload_info,np.array(workload_info[str(args.target)])))
         count -= 1
 
     #knob data
@@ -350,7 +353,7 @@ def double_prepareForGA(args, top_k_knobs):
     target_workload_infos = pd.DataFrame(target_workload_info, columns = workload_info['info'])
 
     knob_with_workload = pd.concat([top_k_knobs, target_workload_infos], axis=1)
-
+    
     #scaler_X = StandardScaler().fit(top_k_knobs)
     scaler_X = StandardScaler().fit(knob_with_workload)
     scaler_ops = StandardScaler().fit(ops_external_data)
