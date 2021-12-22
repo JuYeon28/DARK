@@ -146,6 +146,8 @@ def metric_simplification(metric_data: dict, logger: logging, args : argparse) -
     fa_model.fit(shuffled_matrix, unique_columnlabels, n_components=5)
     # Components: metrics * factors
     components = fa_model.components_.T.copy()
+    # np.save(f'./components_{args.target}', components)
+    # print(unique_columnlabels)
 
     # Clustering method : Gaussian Mixture Model(GMM)
     logger.info("Clustering mode : {}".format(args.cluster))
